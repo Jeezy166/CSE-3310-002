@@ -13,9 +13,7 @@ chat_gui.cpp
 
 Code modified by David Benepe on October 17th 2017
 
-This is a simple example on how to use FLTK with the boost client/server code. 
-
-This code is based on Assignment 1, so you shouldn't use this as the base for your project.
+This is a simple example on how to use FLTK with the boost client/server code.
 
 */
 #include <FL/Fl.H>
