@@ -1,6 +1,6 @@
 EXECUTABLES = server
 
-SOURCE_FILES = command_parser.cpp server_main.cpp
+SOURCE_FILES = command.cpp server_main.cpp
 
 .PHONY: all server
 

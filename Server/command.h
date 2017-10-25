@@ -1,5 +1,5 @@
 /*
-command_parser.h
+command.h
 
 The 'Command' object will take in a string with the format "<Checksum> <Time> <Major_Command> <Optional Arguments>",
 and checks if that command is valid (has enough parameters, has a good checksum, etc).

@@ -7,3 +7,6 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/algorithm/string/find.hpp>
 #include <boost/cstdint.hpp>
+
+#include <boost/asio.hpp>
+using boost::asio::ip::tcp;
