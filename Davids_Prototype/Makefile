@@ -7,7 +7,8 @@ EXECUTABLES = chat_gui chat_server
 
 all: ${EXECUTABLES}
 
-chat_server: chat_message.hpp chat_server.cpp
+chat_server: 
+	g++ -std=c++11 chat_message.hpp chat_server.cpp -o chat_server -lboost_system -lpthread
 
 chat_gui: 
 	g++ -std=c++11 `fltk-config --cxxflags` chat_client.cpp  `fltk-config --ldflags` -o chat_gui -lboost_system -lpthread
