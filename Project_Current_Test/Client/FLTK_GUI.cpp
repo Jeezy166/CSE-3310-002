@@ -1,0 +1,381 @@
+#include "FLTK_GUI.h"
+#include <sstream>
+#include <iomanip>
+
+void SimpleWindow::test_nicknames() {
+	int pass = 0;		//keeps track of all passed tests
+	int fail = 0;		//keeps track of all failed tests
+	string message ="";	//string message to be displayed as results
+	for(int i = 1; i < 20+1;i++)	//change nickname 20 times to have a bigger chance of failure
+	{ 
+		string add_nick = "Test" + to_string(i);	//add nicknames Test1 - Test20
+		SendServerMessage("REQNICK", "Test" + to_string(i));	//reuest the nick from the server
+		message = message + "Name requested: "+ add_nick;	//add requested nick to message buffer for displaying result
+		c->output_text_string = message ;			//set output string to message buffer
+		c->text_buffer->text(c->output_text_string.c_str());	//
+		usleep(200);						//allow code to "catch-up" to change nicks again
+		message = message + "\n  " +nick_name + "\n";
+		c->output_text_string = message ;
+		c->text_buffer->text(c->output_text_string.c_str());
+		add_nick = "Nick: " +add_nick;
+		if(!add_nick.compare(nick_name))
+{
+			message = message +"test_" + to_string(i) + " passed"+ "\n\n";
+			c->output_text_string = message;
+			c->text_buffer->text(c->output_text_string.c_str());
+			pass++;
+		}
+		else{
+			message = message +"test_" + to_string(i) + " failed"+ "\n\n";
+			c->output_text_string = message;
+			c->text_buffer->text(c->output_text_string.c_str());
+			fail++;
+		}
+	}	
+	message = message + "\n\nTests passed: " + to_string(pass) + " Tests failed: " + to_string(fail) + "  " + to_string(pass/(pass+fail)*100) +" % passed\n";
+		c->output_text_string = message ;
+		c->text_buffer->text(c->output_text_string.c_str());
+}
+
+void SimpleWindow::test_chatrooms() {
+	int pass = 0;
+	int fail = 0;
+	string message ="";
+	for(int i = 1; i < 50+1;i++)
+	{
+		int end = 0;
+		string add_chatroom = "Test" + to_string(i);
+		SendServerMessage("NAMECHATROOM", add_chatroom);
+		message = message + "Chatroom requested: "+ add_chatroom + "\n";
+		c->output_text_string = message ;
+		c->text_buffer->text(c->output_text_string.c_str());
+		usleep(2500);
+		message = message + "size: "+ to_string(chat_room_strings.size()) + "\n";
+		for(int j = 0; j < chat_room_strings.size() ;j++)
+		{
+			if(chat_room_strings[j] == add_chatroom)
+			{
+				message = message +"test_" + to_string(i) + " passed"+ "\n\n";
+				c->output_text_string = message;
+				c->text_buffer->text(c->output_text_string.c_str());
+				pass++;
+				end = -1;
+				j = chat_room_strings.size() +1;
+				usleep(2500);
+			}
+		}
+		if(end != -1)
+		{
+ 			message = message +"=================== test_" + to_string(i) + " failed ===================\n\n";
+			c->output_text_string = message;
+			c->text_buffer->text(c->output_text_string.c_str());
+			fail++;
+		}
+	}	
+	message = message + "\n\nTests passed: " + to_string(pass) + " Tests failed: " + to_string(fail) + "  " + to_string((pass*100)/(pass+fail)) +" % passed\n";
+		c->output_text_string = message ;
+		c->text_buffer->text(c->output_text_string.c_str());
+	for(int i = 1; i < 50+1;i++)
+	{
+		string add_chatroom = "Test" + to_string(i);
+		SendServerMessage("DELETE", add_chatroom);
+	}		
+}
+
+void SimpleWindow::timer_update_cb(void* v) {
+	SimpleWindow* win = (SimpleWindow*)v;
+	win->redraw();
+	win->timer_countdown--;
+	if(win->timer_countdown > 0)
+   		Fl::repeat_timeout(0.1, timer_update_cb, win);
+}
+void recieveMessageToGui(SimpleWindow* win, string msg){
+	win->chatClientCallback(msg);
+}
+
+void SimpleWindow::chatClientCallback(string msg){
+	if(msg.substr(0,10) == "CHATROOMS ") {
+		updateChatRooms(msg.substr(10));
+	} else if(msg.substr(0,6) == "USERS ") {
+		updateUsers(msg.substr(6));
+	} else if(msg.substr(0,9) == "NICKNAME ") {
+		
+		nick_name = "Nick: " + msg.substr(9);
+		nickLabel->label(nick_name.c_str());
+	}
+
+	if(timer_countdown == 0)
+	{
+		timer_countdown = 100;
+   		Fl::add_timeout(0.25, timer_update_cb, this);
+	}
+}
+
+bool SimpleWindow::ShowUsernameRequest(string message) {
+	return ShowInputDialog(message, "Set Nickname", cb_username_request);
+}
+
+bool SimpleWindow::ShowAddNewChatroomRequest() {
+	return ShowInputDialog("Enter new chatroom name.", "New Chatroom", cb_chatroom_request);
+}
+
+bool SimpleWindow::ShowInputDialog(string message, string title, Fl_Callback* callback) {
+	Fl_Window* w = new Fl_Window(250, 200, title.c_str());
+	Fl_Input* input = new Fl_Input(50, 10, 150, 25);
+	Fl_Button* ok_but = new Fl_Button(100, 50, 40, 25, "Ok");
+	Fl_Box* show_message = new Fl_Box(0, 50, 250, 150, message.c_str());
+	void* pointers[4];
+	pointers[0] = (void*)this;
+	pointers[1] = (void*)w;
+	pointers[2] = (void*)input;
+	pointers[3] = (void*)show_message;
+
+	ok_but->callback(callback, pointers);
+	w->set_modal();
+	w->show();
+	while (w->shown()) Fl::wait();
+	return strlen(input->value()) > 0; 
+}
+
+void SimpleWindow::ShowUsernameRequest_cb(Fl_Widget* w, void* v) {
+	((SimpleWindow*)v)->ShowUsernameRequest("Change your nickname.");
+}
+
+void SimpleWindow::ShowAddNewChatroomRequest_cb(Fl_Widget* w, void* v) {
+	((SimpleWindow*)v)->ShowAddNewChatroomRequest();
+}
+
+void SimpleWindow::cb_username_request(Fl_Widget* widget, void* v) {
+	SimpleWindow* main_win = (SimpleWindow*)(((void**)v)[0]);
+	Fl_Window* win_pointer = (Fl_Window*)(((void**)v)[1]);
+	string username_req_str = ((Fl_Input*)(((void**)v)[2]))->value();
+	for(char c : username_req_str) {
+		if(!isalnum(c)) {
+			Fl_Box* show_msg = (Fl_Box*)((void**)v)[3];
+			show_msg->label("Error: Input not valid.\n\nYou can only use \nalphanumeric characters.");
+			return;
+		}
+	}
+	main_win->cb_username_request_i(username_req_str.c_str(), win_pointer);
+}
+
+void SimpleWindow::cb_chatroom_request(Fl_Widget* widget, void* v) {
+	SimpleWindow* main_win = (SimpleWindow*)(((void**)v)[0]);
+	Fl_Window* win_pointer = (Fl_Window*)(((void**)v)[1]);
+	string chatroom_req_str = ((Fl_Input*)(((void**)v)[2]))->value();
+	main_win->cb_chatroom_request_i(chatroom_req_str.c_str(), win_pointer);
+}
+
+void SimpleWindow::cb_username_request_i(const char* nickname_req, Fl_Window* win_pointer) {
+	//cout << "Nickname = " << nickname_req << endl;
+	if(!strcmp(nickname_req,"testnicknames") || !strcmp(nickname_req,"Testnicknames"))
+	{	
+		win_pointer->hide();
+		string message ="";
+		chatroom_select_buttons->hide();
+		new_chat_but->hide();
+		but->deactivate();
+		c->output_text_string = "This is a series of tests to check nickname changes";
+		c->text_buffer->text(c->output_text_string.c_str());	
+		test_nicknames();
+		but->activate();
+
+	}
+	else if(!strcmp(nickname_req,"testchatrooms") || !strcmp(nickname_req,"Testchatrooms"))
+	{	
+			
+		chatroom_select_buttons->deactivate();
+		new_chat_but->hide();
+		but->deactivate();
+		test_chatrooms();
+		but->activate();
+		win_pointer->hide();
+	}
+	else if(strlen(nickname_req) > 0) {
+	c->output_text_string = "Welcome to Uberchat!\nSelect a chat room by clicking one of the buttons on the left side!";
+    	c->text_buffer->text(c->output_text_string.c_str());
+	chatroom_select_buttons->show();
+	new_chat_but->show();
+	chatroom_select_buttons->activate();
+	win_pointer->hide();
+	}
+
+	SendServerMessage("REQNICK", nickname_req);
+}
+
+void SimpleWindow::cb_chatroom_request_i(const char* chatroom_req, Fl_Window* win_pointer) {
+	if(strlen(chatroom_req) > 0) {
+		SendServerMessage("NAMECHATROOM", chatroom_req);
+		win_pointer->hide();
+	}
+}
+
+uint32_t SimpleWindow::CalculateChecksum(string content) {
+	uint32_t crc = crc32(0L, Z_NULL, 0);
+	crc = crc32(crc, (const unsigned char*) content.c_str(), content.length());
+	return crc;
+}
+
+void SimpleWindow::SendServerMessage(string major_command, string argument) {
+	string content = major_command + string(" ") + argument;
+	uint32_t checksum = CalculateChecksum(content);
+	stringstream stream;
+	stream << hex << checksum;
+	string msg_text = stream.str() + string(" 01:23.4567 ") + content;
+	//cout << "msg_text = "<< msg_text << endl;
+	mtx.lock();
+		chat_message msg;
+		msg.body_length(strlen(msg_text.c_str()));
+		memcpy(msg.body(), msg_text.c_str(), msg.body_length());
+		msg.encode_header();
+		cout << "msg.body() = "<< msg.body() << endl;
+		c->write(msg);
+	mtx.unlock();
+}
+
+void SimpleWindow::updateButtonStates()
+{
+	for(int i = 0; i < chatroom_select_buttons->children(); i++)
+	{
+		Fl_Button* but = (Fl_Button*)chatroom_select_buttons->child(i);
+		
+		if(string(but->label()) == current_chatroom_name)
+			but->deactivate();
+		else
+			but->activate();
+		but->redraw();
+	}
+}
+void SimpleWindow::joinCR_callback_cb(Fl_Widget* w, void* v)
+{
+	SimpleWindow* win = (SimpleWindow*)v;
+	win->joinCR_callback_cb_i(w);
+}
+void SimpleWindow::joinCR_callback_cb_i(Fl_Widget* w)
+{
+	SendServerMessage("JOINCHATROOM", ((Fl_Button*)w)->label());
+	current_chatroom_name = ((Fl_Button*)w)->label();
+	updateButtonStates();
+	send->activate();
+        inp->activate();
+	c->output_text_string = "";
+	text_buffer->text(c->output_text_string.c_str());
+	SendServerMessage("REQUSERS", "");
+}
+
+void SimpleWindow::updateChatRooms(string room_list) {
+	chatroom_select_buttons->clear();
+	chatroom_select_buttons->clip_children(1);
+	boost::split(chat_room_strings, room_list, boost::is_any_of(","));
+	cout << "# chatrooms = " << chat_room_strings.size() << endl;
+	for(size_t i = 0; i < chat_room_strings.size(); i++)
+	{
+		Fl_Button* chat_room_select = new Fl_Button(10,35+(i*32),140,30,chat_room_strings[i].c_str());
+		chat_room_select->callback(joinCR_callback_cb, this);
+		chatroom_select_buttons->add(chat_room_select);
+		
+	}
+	updateButtonStates();
+
+}
+
+void SimpleWindow::updateUsers(string user_list) {
+	users_list->clear();
+	users_list->clip_children(1);
+	boost::split(users, user_list, boost::is_any_of(","));
+	for(size_t i = 0; i < users.size(); i++)
+	{
+		Fl_Box* user = new Fl_Box(800, 35+(i*22),190,20,users[i].c_str());
+      		user->box(FL_NO_BOX);
+		users_list->add(user);
+	}
+}
+
+SimpleWindow::SimpleWindow(int w, int h, const char* title):Fl_Window(w,h,title){
+
+   begin();
+      callback(cb_quit, this);
+
+      // Chat output
+      text_buffer = new Fl_Text_Buffer();
+      text_output = new Fl_Text_Display(160, 30, w - 370, h - 70);
+      text_output->buffer(text_buffer);
+      text_output->wrap_mode(Fl_Text_Display::WRAP_AT_BOUNDS, 0); // Enable word wrap in output window
+
+      // Init message input & send button
+      inp = new Fl_Input(160, h-35, w-415, 25);
+      send = new Fl_Button(w-250, h-35, 40, 25, "Send");
+      send->deactivate();
+      inp->deactivate();
+      send->callback(cb_send, this);
+
+      // Nickname label & button to change the nickname;
+      nickLabel = new Fl_Box(160, 0, 200, 35, "Nick: ");
+      nickLabel->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+      but = new Fl_Button(w-360, 3, 150, 25, "Change Nickname");
+      but->callback(ShowUsernameRequest_cb, this);
+	
+
+      // Button to add new chatrooms
+      new_chat_but = new Fl_Button(5, h-40, 150, 25, "New Chatroom");
+      new_chat_but->callback(ShowAddNewChatroomRequest_cb, this);
+	
+      end(); // This seems to be necessary to fix an issue with Fl_Group.
+      begin();
+
+
+      // List of users
+      Fl_Box* users_box = new Fl_Box(w-205,4,200,25,"Users");
+      users_box->box(FL_THIN_UP_FRAME);
+      users_list = new Fl_Group(w-205,30,200,h-70);
+      users_list->box(FL_ENGRAVED_BOX);
+
+      end(); // This seems to be necessary to fix an issue with Fl_Group.
+      begin();
+
+      // "Chat Rooms" label, and fl_group which hold buttons to join chatrooms.
+      Fl_Box* box = new Fl_Box(5,4,150,25,"Chat Rooms");
+      box->box(FL_THIN_UP_FRAME);
+      chatroom_select_buttons = new Fl_Group(5,30,150,h-70);
+      chatroom_select_buttons->box(FL_ENGRAVED_BOX);
+
+
+   end();
+   show();
+}
+
+SimpleWindow::~SimpleWindow(){}
+
+void SimpleWindow::UpdateChatroomButtons(){
+   SendServerMessage("REQCHATROOMS","");
+}
+
+void SimpleWindow::cb_send(Fl_Widget* , void* v) {
+    ( (SimpleWindow*)v )->cb_send_i();
+}
+
+void SimpleWindow::cb_send_i() {
+      	char* msg_text = (char*)inp->value();
+
+    	 // Send message to server if message box is not empty.
+	if(strlen(msg_text) > 0) {
+		SendServerMessage("SENDTEXT", string(msg_text));
+	}
+
+ 	// Clear message box
+	inp->value("");
+}
+
+void SimpleWindow::cb_quit(Fl_Widget* , void* v) {
+    ( (SimpleWindow*)v )->cb_quit_i();
+}
+
+void SimpleWindow::cb_quit_i() {
+     mtx.lock();
+     	// Close the chat client and boost thread when the window closes.
+    	c->close();
+    	t->join();
+    mtx.unlock();
+
+    hide();
+}
