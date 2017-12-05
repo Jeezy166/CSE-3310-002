@@ -32,7 +32,7 @@ void SimpleWindow::test_nicknames() {
 			fail++;
 		}
 	}	
-	message = message + "\n\nTests passed: " + to_string(pass) + " Tests failed: " + to_string(fail) + "  " + to_string(pass/(pass+fail)*100) +" % passed\n";
+	message = message + "\n\nTests passed: " + to_string(pass) + " Tests failed: " + to_string(fail) + "  " + to_string(pass*100/(pass+fail)) +" % passed\n";
 		c->output_text_string = message ;
 		c->text_buffer->text(c->output_text_string.c_str());
 }
@@ -41,7 +41,7 @@ void SimpleWindow::test_chatrooms() {
 	int pass = 0;
 	int fail = 0;
 	string message ="";
-	for(int i = 1; i < 50+1;i++)
+	for(int i = 1; i < 30+1;i++)
 	{
 		int end = 0;
 		string add_chatroom = "Test" + to_string(i);
@@ -75,7 +75,7 @@ void SimpleWindow::test_chatrooms() {
 	message = message + "\n\nTests passed: " + to_string(pass) + " Tests failed: " + to_string(fail) + "  " + to_string((pass*100)/(pass+fail)) +" % passed\n";
 		c->output_text_string = message ;
 		c->text_buffer->text(c->output_text_string.c_str());
-	for(int i = 1; i < 50+1;i++)
+	for(int i = 1; i < 30+1;i++)
 	{
 		string add_chatroom = "Test" + to_string(i);
 		SendServerMessage("DELETE", add_chatroom);
