@@ -55,7 +55,8 @@ private:
   {
   	cout << "Deleting chatroom!" << endl;
 	int iterator = 0;
-	for(int i = 1; i< rooms_.size(); i++)
+    int size = rooms_.size();
+	for(int i = 1; i< size; i++)
 	{
 	   string name = rooms_[i].getName();
 		if((room_name == name)){
