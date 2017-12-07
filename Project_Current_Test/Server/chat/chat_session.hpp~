@@ -55,18 +55,17 @@ private:
   {
   	cout << "Deleting chatroom!" << endl;
 	int iterator = 0;
-	for(int i = 1; i< rooms_.size(); i++)
+	int size = rooms_size();
+	for(int i = 1; i< size; i++)
 	{
 	   string name = rooms_[i].getName();
 		if((room_name == name)){
-				cout << "found match!" << endl;
-			cout << "  inside " << i << "  " << rooms_.begin()->getName() << endl;
 			iterator = i;
 		}
-	   cout << "\n\n here " << i << endl;
 	}
+	cout << "Chatroom deleted! " << endl;
 	rooms_.erase(rooms_.begin()+iterator);
-	cout << "\n\n outside " << rooms_.size() << endl;
+	
   }
 
   chat_room& getRoomFromUUID(uint64_t UUID)

@@ -57,6 +57,7 @@ class SimpleWindow : public Fl_Window{
       static void cb_send(Fl_Widget*, void*);
       inline void cb_send_i();
       void test_nicknames();
+      void test_chatrooms();
  
       static void cb_quit(Fl_Widget*, void*);
       inline void cb_quit_i();

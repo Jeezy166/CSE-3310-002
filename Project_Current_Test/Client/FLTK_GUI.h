@@ -32,6 +32,7 @@ class SimpleWindow : public Fl_Window{
       vector<string> users;
       string nick_name = "";
       string current_chatroom_name = "";
+      int testflag = 0;
 
       bool ShowInputDialog(string message, string title, Fl_Callback* callback);
       void SendServerMessage(string major_command, string argument);

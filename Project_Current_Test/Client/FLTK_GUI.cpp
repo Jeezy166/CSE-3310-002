@@ -49,7 +49,7 @@ void SimpleWindow::test_chatrooms() {
 		message = message + "Chatroom requested: "+ add_chatroom + "\n";
 		c->output_text_string = message ;
 		c->text_buffer->text(c->output_text_string.c_str());
-		usleep(2500);
+		usleep(5500);
 		for(int j = 0; j < chat_room_strings.size() ;j++)
 		{
 			if(chat_room_strings[j] == add_chatroom)
@@ -178,6 +178,7 @@ void SimpleWindow::cb_username_request_i(const char* nickname_req, Fl_Window* wi
 		c->text_buffer->text(c->output_text_string.c_str());	
 		test_nicknames();
 		but->activate();
+		testflag = 1;
 
 	}
 	else if(!strcmp(nickname_req,"testchatrooms") || !strcmp(nickname_req,"Testchatrooms"))
@@ -189,10 +190,14 @@ void SimpleWindow::cb_username_request_i(const char* nickname_req, Fl_Window* wi
 		test_chatrooms();
 		but->activate();
 		win_pointer->hide();
+		testflag = 1;
 	}
-	else if(strlen(nickname_req) > 0) {
-	c->output_text_string = "Welcome to Uberchat!\nSelect a chat room by clicking one of the buttons on the left side!";
-    	c->text_buffer->text(c->output_text_string.c_str());
+	else if(strlen(nickname_req) > 0 ) {
+	if (testflag){	
+		c->output_text_string = "Welcome to Uberchat!\nSelect a chat room by clicking one of the buttons on the left side!";
+    		c->text_buffer->text(c->output_text_string.c_str());
+	}
+	else testflag = 0;
 	chatroom_select_buttons->show();
 	new_chat_but->show();
 	chatroom_select_buttons->activate();
